@@ -1,0 +1,70 @@
+import RPi.GPIO as GPIO
+import cv2
+import numpy as np
+import time
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+LEFT_PWM = 17
+LEFT_DIR = 27
+RIGHT_PWM = 18
+RIGHT_DIR = 22
+
+GPIO.setup(LEFT_PWM, GPIO.OUT)
+GPIO.setup(LEFT_DIR, GPIO.OUT)
+GPIO.setup(RIGHT_PWM, GPIO.OUT)
+GPIO.setup(RIGHT_DIR, GPIO.OUT)
+
+left_pwm = GPIO.PWM(LEFT_PWM, 100)
+right_pwm = GPIO.PWM(RIGHT_PWM, 100)
+
+left_pwm.start(0)
+right_pwm.start(0)
+
+GPIO.output(LEFT_DIR, GPIO.HIGH)
+GPIO.output(RIGHT_DIR, GPIO.HIGH)
+
+cap = cv2.VideoCapture(0)
+cap.set(3, 640)
+cap.set(4, 480)
+
+lower_color = np.array([35, 100, 100])
+upper_color = np.array([85, 255, 255])
+
+left_speed = 70
+right_speed = 50
+circle_duration = 2.5
+total_duration = circle_duration * 3
+
+time.sleep(1)
+
+left_pwm.ChangeDutyCycle(left_speed)
+right_pwm.ChangeDutyCycle(right_speed)
+
+start_time = time.time()
+
+while time.time() - start_time < total_duration:
+    ret, frame = cap.read()
+    if not ret:
+        continue
+    
+    hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    color_mask = cv2.inRange(hsv_frame, lower_color, upper_color)
+    
+    if np.sum(color_mask) > 0:
+        left_pwm.ChangeDutyCycle(0)
+        right_pwm.ChangeDutyCycle(0)
+        time.sleep(1)
+        left_pwm.ChangeDutyCycle(left_speed)
+        right_pwm.ChangeDutyCycle(right_speed)
+    
+    time.sleep(0.1)
+
+left_pwm.ChangeDutyCycle(0)
+right_pwm.ChangeDutyCycle(0)
+left_pwm.stop()
+right_pwm.stop()
+GPIO.cleanup()
+cap.release()
+cv2.destroyAllWindows()
