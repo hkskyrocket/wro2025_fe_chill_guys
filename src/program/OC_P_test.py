@@ -6,6 +6,7 @@ import sys
 import time
 
 from math import cos,pi
+from ev3dev2.sound import Sound
 from ev3dev2.motor import MediumMotor, OUTPUT_C,OUTPUT_D,SpeedPercent;
 from ev3dev2.sensor import INPUT_4,INPUT_3;
 from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor;
@@ -28,6 +29,7 @@ driveMotor = MediumMotor(OUTPUT_D)
 steeringMotor = MediumMotor(OUTPUT_C)
 gyro = GyroSensor(INPUT_4)
 horDis = UltrasonicSensor(INPUT_3)
+sound = Sound()
 
 def debug_print(*args, **kwargs):
     '''Print debug messages to stderr.
@@ -65,6 +67,7 @@ def init():
     driveMotor.reset
     steeringMotor.reset
     gyro.reset
+    
 
     # steering left to right 105 to 15
 def getHeading(currentValue):
@@ -127,17 +130,41 @@ def main():
 
 if __name__ == '__main__':
     init()
+    sound.set_volume(75)
     
     steeringInit = int(steeringMotor.position + 62)
     
     
     print('press to start')
+    sound.beep()
     while button.right != True:
         time.sleep(0.1)
     steeringMotor.on_to_position(SpeedPercent(100),steeringInit)
     time.sleep(1)
     gyroInit = gyro.angle
     print('press up to go')
+    sound.beep()
+    while button.backspace != True:
+        print('steering motor position',int(steeringMotor.position - steeringInit))
+        if (button.enter == True):
+           gyroInit = gyro.angle
+        main()
+else:
+    init()
+    sound.set_volume(75)
+    
+    steeringInit = int(steeringMotor.position + 62)
+    
+    
+    print('press to start')
+    sound.beep()
+    while button.right != True:
+        time.sleep(0.1)
+    steeringMotor.on_to_position(SpeedPercent(100),steeringInit)
+    time.sleep(1)
+    gyroInit = gyro.angle
+    print('press up to go')
+    sound.beep()
     while button.backspace != True:
         print('steering motor position',int(steeringMotor.position - steeringInit))
         if (button.enter == True):
