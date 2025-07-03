@@ -8,8 +8,8 @@ import time
 from math import cos,pi
 from ev3dev2.sound import Sound
 from ev3dev2.motor import MediumMotor, OUTPUT_C,OUTPUT_D,SpeedPercent;
-from ev3dev2.sensor import INPUT_4,INPUT_3;
-from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor;
+from ev3dev2.sensor import INPUT_4,INPUT_3,INPUT_2;
+from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor,ColorSensor;
 from ev3dev2.button import Button;
 
 # state constants
@@ -17,7 +17,9 @@ ON = True
 OFF = False
 init_status = False
 
-runTime = int(0)
+colour = ['white','orange','blue']
+currentDetectedColour = colour[0]
+sessionMoved = int(0)
 steeringInit = int(0)
 gyroInit = float(0)
 targetHeading = float
@@ -29,7 +31,10 @@ driveMotor = MediumMotor(OUTPUT_D)
 steeringMotor = MediumMotor(OUTPUT_C)
 gyro = GyroSensor(INPUT_4)
 horDis = UltrasonicSensor(INPUT_3)
+colourSensor = ColorSensor(INPUT_2)
 sound = Sound()
+
+gyroInit = float(gyro.angle)
 
 def debug_print(*args, **kwargs):
     '''Print debug messages to stderr.
@@ -67,6 +72,7 @@ def init():
     driveMotor.reset
     steeringMotor.reset
     gyro.reset
+    colourSensor.MODE_RGB_RAW
     
 
     # steering left to right 105 to 15
@@ -76,6 +82,7 @@ def getHeading(currentValue):
 
 def wallFollower():
     distanceCorrection(15)
+    print("wall follower")
     
 def headingCorrect(targetHeading):
     targetHeading = float(targetHeading)
@@ -108,7 +115,7 @@ def distanceCorrection(targetDistance):
     elif(abs(distanceError)<2):
         distanceError = 0
     elif (distanceError > 0):
-        distanceError = distanceError * 4
+        distanceError = distanceError * 5
     distance_output = float(distanceError * distance_kp)
     # distance_output = targetHeading
     headingCorrect(distance_output)
@@ -116,57 +123,88 @@ def distanceCorrection(targetDistance):
     
 def getWallDistance(detectDistance,currentHeading):
     currentHeading = float(currentHeading)
-    detectDistance = float(detectDistance)
+    detectDistance = float(detectDistance) 
     return float(cos(abs(currentHeading/180*pi)) * detectDistance)
 
-def main():
-    print(gyro.angle,getHeading(gyro.angle))
-    wallFollower()
-    if button.up == True:
-        driveMotor.on(SpeedPercent(100))
-    elif button.down == True:
-        driveMotor.on(SpeedPercent(0))
+def getColourDetected(hsv):
+    h= hsv[0]
+    s = hsv[1]
+    v = hsv[2]
+    debug_print('hsv',hsv)
+    if(s > 0.4):
+        print(colour[1])
+        return int (2)
+    elif(v < 105):
+        print(colour[2])
+        return int(1)
+    else:
+        print(colour[0])
+        return int(0)
     
+        
+    
+# start init program
+init()
+sound.set_volume(75)
+steeringInit = int(steeringMotor.position + 62)
+    
+print('press to start')
+sound.beep()
+while button.right != True:
+    debug_print('hsv',colourSensor.hsv)
+# wait for start
 
-if __name__ == '__main__':
-    init()
-    sound.set_volume(75)
-    
-    steeringInit = int(steeringMotor.position + 62)
-    
-    
-    print('press to start')
-    sound.beep()
-    while button.right != True:
-        time.sleep(0.1)
-    steeringMotor.on_to_position(SpeedPercent(100),steeringInit)
-    time.sleep(1)
-    gyroInit = gyro.angle
-    print('press up to go')
-    sound.beep()
-    while button.backspace != True:
-        print('steering motor position',int(steeringMotor.position - steeringInit))
-        if (button.enter == True):
-           gyroInit = gyro.angle
-        main()
-else:
-    init()
-    sound.set_volume(75)
-    
-    steeringInit = int(steeringMotor.position + 62)
-    
-    
-    print('press to start')
-    sound.beep()
-    while button.right != True:
-        time.sleep(0.1)
-    steeringMotor.on_to_position(SpeedPercent(100),steeringInit)
-    time.sleep(1)
-    gyroInit = gyro.angle
-    print('press up to go')
-    sound.beep()
-    while button.backspace != True:
-        print('steering motor position',int(steeringMotor.position - steeringInit))
-        if (button.enter == True):
-           gyroInit = gyro.angle
-        main()
+steeringMotor.on_to_position(SpeedPercent(100),steeringInit)
+time.sleep(0.5)
+gyroInit = gyro.angle
+print('press up to go')
+sound.beep()
+print('steering motor position',int(steeringMotor.position - steeringInit))
+currentDetectedColour = colour[getColourDetected(colourSensor.hsv)]
+driveMotor.on(SpeedPercent(50))
+while(currentDetectedColour == colour[0]):
+        print("session moved",sessionMoved)
+        wallFollower()
+        print(colour[getColourDetected(colourSensor.hsv)])
+        currentDetectedColour = colour[getColourDetected(colourSensor.hsv)]
+if (currentDetectedColour == colour[1]):
+    while(sessionMoved<13):
+        print("session moved",sessionMoved)
+        sound.beep()
+        while(getHeading(gyro.angle) < 75):
+            print(getHeading(gyro.angle))
+            steeringMotor.on_to_position(SpeedPercent(100),int(-25 + steeringInit ))
+        sound.beep()
+        gyroInit = gyroInit + 60
+        currentDetectedColour = colour[0]
+        initDrive = driveMotor.position
+        currentDrive = driveMotor .position
+        while ((not currentDetectedColour == colour[1]) or 
+               (currentDrive - initDrive)<2500):
+            wallFollower()
+            currentDrive = driveMotor .position
+            print(currentDrive - initDrive)
+            currentDetectedColour = colour[getColourDetected(colourSensor.hsv)]
+        sessionMoved = sessionMoved +1
+elif(currentDetectedColour == colour[2]):
+    while(sessionMoved<13):
+        print("session moved",sessionMoved)
+        sound.beep()
+        while(getHeading(gyro.angle)>-60):
+            print(getHeading(gyro.angle))
+            steeringMotor.on_to_position(SpeedPercent(100),int(25 + steeringInit ))
+        sound.beep()
+        gyroInit = gyroInit - 90
+        currentDetectedColour = colour[0]
+        initDrive = driveMotor.position
+        currentDrive = driveMotor .position
+        while ((not currentDetectedColour == colour[2]) or 
+               (currentDrive - initDrive)<2500):
+            currentDrive = driveMotor .position
+            print(currentDrive - initDrive)
+            wallFollower()
+            currentDetectedColour = colour[getColourDetected(colourSensor.hsv)]
+        sessionMoved = sessionMoved +1
+driveMotor.on_for_rotations(SpeedPercent(100),10)
+driveMotor.on(SpeedPercent(0))
+exit
