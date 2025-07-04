@@ -199,19 +199,19 @@ def leftTurn():
     sound.beep()
     
 def main(area):
-    while(currentDetectedColout == colour[1]):
+    while(currentDetectedColout == colour[0]):
         signPathing()
         getColourDetected(colourSensor.red,colourSensor.green,colourSensor.blue)
-    if (currentDetectedColout == colour[2]):
+    if (currentDetectedColout == colour[1]):
         while(sessionMoved<13):
             rightTurn
-            while (currentDetectedColout == colour[1]):
+            while (not currentDetectedColout == colour[1]):
                 wallFollower
                 getColourDetected(colourSensor.red,colourSensor.green,colourSensor.blue)
-    elif(currentDetectedColout == colour[3]):
+    elif(currentDetectedColout == colour[2]):
         while(sessionMoved<13):
             leftTurn
-            while (currentDetectedColout == colour[1]):
+            while (not currentDetectedColout == colour[2]):
                 wallFollower
                 getColourDetected(colourSensor.red,colourSensor.green,colourSensor.blue)
     driveMotor.on_for_rotations(SpeedPercent(100),10)
