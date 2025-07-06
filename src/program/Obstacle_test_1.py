@@ -113,7 +113,8 @@ def headingCorrect(targetHeading,heading_kp):
     except NameError:
         heading_kp = 0.5
     heading_output = float(heading_output * heading_kp)
-    print("heading kp",heading_kp)
+    if (abs(heading_output)>45):
+        heading_output = 45 * heading_output / abs(heading_output)
     steeringMotor.on_to_position(SpeedPercent(100),int(heading_output + steeringInit ))
     print("heading error,output",headingError,heading_output)
         
@@ -161,20 +162,31 @@ def signPathing(area):
         if(sig == 1):
             # red traffic sign
             if (dxc > -100):
+                if (abs(dxc)< 30):
+                    dxc = 30 * dxc / abs(dxc)
                 headingCorrect(abs(dxc)*0.2,3)
             else:
-                headingCorrect(0,0.5)
+                headingCorrect(15,0.5)
         elif (sig == 2):
             # green traffic sign
             print(dxc)
             if (dxc < 100):
+                if (abs(dxc)< 30):
+                    dxc = 30 * dxc / abs(dxc)
                 headingCorrect(-abs(dxc)*0.2,3)
             else:
-                headingCorrect(0,0.5)
+                headingCorrect(15,0.5)
     else:
+        if (signFound):
+            initDrivePosition = driveMotor.position
+            while(driveMotor.position - initDrivePosition <200):
+                headingCorrect(getHeading(gyro.angle),0.5)
+            signFound = False
+        else:
+             wallFollower()
         print("target not found")
         heading_kp = 0.5
-        headingCorrect(0,0.5)
+    
 
 # start init
 init()
