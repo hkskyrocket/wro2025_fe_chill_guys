@@ -214,11 +214,16 @@ if (currentDetectedColour == 1):
             print(getHeading(gyro.angle))
             steeringMotor.on_to_position(SpeedPercent(100),int(-40 + steeringInit ))
         sound.beep()
+        driveMotor.on(SpeedPercent(0))
+        time.sleep(0.3)
         gyroInit = gyro.angle
+        time.sleep(0.2)
+        sound.beep()
         currentDetectedColour = 0
         initDrive = driveMotor.position
         currentDrive = driveMotor .position
         steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit ))
+        driveMotor.on(SpeedPercent(100))
         while ((currentDetectedColour == 0) or 
                (currentDrive - initDrive)<3500):
             currentDrive = driveMotor .position
@@ -252,7 +257,11 @@ if (currentDetectedColour == 1):
         driveMotor.on(SpeedPercent(40))
         steeringMotor.on_to_position(SpeedPercent(100),int(-40 + steeringInit ))
     sound.beep()
+    driveMotor.on(SpeedPercent(0))
+    time.sleep(0.3)
     gyroInit = gyro.angle
+    time.sleep(0.2)
+    sound.beep()
     currentDetectedColour = 0    
 elif(currentDetectedColour == 2):
     while(sessionMoved<11):
@@ -263,7 +272,11 @@ elif(currentDetectedColour == 2):
             print(getHeading(gyro.angle))
             steeringMotor.on_to_position(SpeedPercent(100),int(25 + steeringInit ))
         sound.beep()
+        driveMotor.on(SpeedPercent(0))
+        time.sleep(0.3)
         gyroInit = gyro.angle
+        time.sleep(0.2)
+        sound.beep()
         currentDetectedColour = 0
         initDrive = driveMotor.position
         currentDrive = driveMotor .position
@@ -287,7 +300,11 @@ elif(currentDetectedColour == 2):
         print(getHeading(gyro.angle))
         steeringMotor.on_to_position(SpeedPercent(100),int(25 + steeringInit ))
     sound.beep()
+    driveMotor.on(SpeedPercent(0))
+    time.sleep(0.3)
     gyroInit = gyro.angle
+    time.sleep(0.2)
+    sound.beep()
 steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit ))
 initDrive = driveMotor.position
 currentDrive = driveMotor .position
