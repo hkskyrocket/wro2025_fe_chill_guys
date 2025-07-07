@@ -22,7 +22,7 @@ currentDetectedColour = 0
 sessionMoved = int(0)
 steeringInit = int(0)
 targetHeading = float
-heading_kp = float(0.5)
+heading_kp = float(1)
 distance_kp = float(1)
 
 button = Button()
@@ -88,21 +88,24 @@ def headingCorrect(targetHeading):
     heading_output = headingLimit(headingError)
     heading_output = float(heading_output * heading_kp)
     
-    steeringMotor.on_to_position(SpeedPercent(100),int(heading_output + steeringInit ))
+    steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit + heading_output ))
     print("heading error,output",headingError,heading_output)
         
 def headingLimit(targetHeadingCorrection):
     targetHeadingCorrection = float(targetHeadingCorrection)
-    if(getHeading(gyro.angle)>15 and targetHeadingCorrection <0):
-        return int(-15)
-    elif(getHeading(gyro.angle)<-15 and targetHeadingCorrection >0):
-        return int(15) 
+    if(getHeading(gyro.angle)>15 and getHeading(gyro.angle) <25 and targetHeadingCorrection <0):
+        return int(15)
+    elif(getHeading(gyro.angle)<-15 and getHeading(gyro.angle) >-25 and targetHeadingCorrection >0 ):
+        return int(-15) 
     elif(abs(targetHeadingCorrection) >45):
-        return int(targetHeadingCorrection / abs(targetHeadingCorrection) * 45)
+        if (abs(getHeading(gyro.angle))>20):
+            return int(targetHeadingCorrection / abs(targetHeadingCorrection) * -45)
+        else:
+            return int(targetHeadingCorrection / abs(targetHeadingCorrection) * 45)
     elif (abs(targetHeadingCorrection)< 10 and abs(targetHeadingCorrection)>3):
-        return int(10 * targetHeadingCorrection / abs(targetHeadingCorrection))
+        return int(3 * targetHeadingCorrection / abs(targetHeadingCorrection))
     else:
-        return targetHeadingCorrection       
+        return targetHeadingCorrection/2       
         
 def distanceCorrection(targetDistance):
     targetDistance = float(targetDistance)
@@ -205,13 +208,8 @@ if (currentDetectedColour == 1):
         # print("session moved",sessionMoved)
         sound.beep()
         debug_print("turning")
-        while(getHeading(gyro.angle) < 20):
-            driveMotor.on(SpeedPercent(50))
-            steeringMotor.on_to_position(SpeedPercent(100),int(-40 + steeringInit ))
-        sound.beep()
         driveMotor.on(SpeedPercent(0))
-        time.sleep(0.3)
-        gyroInit = gyro.angle
+        gyroInit = gyroInit + 90
         # gyroInit = gyroInit + 80
         time.sleep(0.2)
         sound.beep()
@@ -220,10 +218,12 @@ if (currentDetectedColour == 1):
         currentDrive = driveMotor.position
         steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit ))
         while ((currentDetectedColour == 0) or 
-               (currentDrive - initDrive)<3500):
+               (currentDrive - initDrive)<4000):
             wallFollower()
             currentDrive = driveMotor.position
-            if(currentDrive - initDrive)<3500:
+            if(currentDrive - initDrive)<800:
+                driveMotor.on(SpeedPercent(40))
+            elif(currentDrive - initDrive)<4000:
                 driveMotor.on(SpeedPercent(100))
             else:
                 driveMotor.on(SpeedPercent(25))
