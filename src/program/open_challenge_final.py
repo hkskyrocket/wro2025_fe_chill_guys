@@ -93,19 +93,22 @@ def headingCorrect(targetHeading):
         
 def headingLimit(targetHeadingCorrection):
     targetHeadingCorrection = float(targetHeadingCorrection)
-    if(getHeading(gyro.angle)>15 and getHeading(gyro.angle) <25 and targetHeadingCorrection <0):
-        return int(15)
-    elif(getHeading(gyro.angle)<-15 and getHeading(gyro.angle) >-25 and targetHeadingCorrection >0 ):
-        return int(-15) 
-    elif(abs(targetHeadingCorrection) >45):
-        if (abs(getHeading(gyro.angle))>20):
-            return int(targetHeadingCorrection / abs(targetHeadingCorrection) * -45)
+    if(getHeading(gyro.angle)>15 and targetHeadingCorrection <0):
+        if getHeading(gyro.angle) <25:
+            return int(15)
+        else :
+            return int(45)
+    elif(getHeading(gyro.angle)<-15 and targetHeadingCorrection >0 ):
+        if getHeading(gyro.angle) >-25:
+            return int(-15)
         else:
-            return int(targetHeadingCorrection / abs(targetHeadingCorrection) * 45)
+            return int(-45)
+    elif(abs(targetHeadingCorrection) >45):
+        return int(targetHeadingCorrection / abs(targetHeadingCorrection) * 45)
     elif (abs(targetHeadingCorrection)< 10 and abs(targetHeadingCorrection)>3):
         return int(3 * targetHeadingCorrection / abs(targetHeadingCorrection))
     else:
-        return targetHeadingCorrection/2       
+        return targetHeadingCorrection/2         
         
 def distanceCorrection(targetDistance):
     targetDistance = float(targetDistance)
