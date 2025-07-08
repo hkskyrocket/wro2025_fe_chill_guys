@@ -151,42 +151,6 @@ def getWallDistance(detectDistance,currentHeading):
     detectDistance = float(detectDistance)
     return float(cos(abs(currentHeading/180*pi)) * detectDistance)
 
-def signPathing(area):
-    area = int(area)
-    if (area > 1000 ):
-        print("target found")
-        signFound = True
-        dxc = 158 - x
-        print("x,y",x,y)
-        print("dxc",dxc)
-        if(sig == 1):
-            # red traffic sign
-            if (dxc > -100):
-                if (abs(dxc)< 30):
-                    dxc = 30 * dxc / abs(dxc)
-                headingCorrect(abs(dxc)*0.2,3)
-            else:
-                headingCorrect(15,0.5)
-        elif (sig == 2):
-            # green traffic sign
-            print(dxc)
-            if (dxc < 100):
-                if (abs(dxc)< 30):
-                    dxc = 30 * dxc / abs(dxc)
-                headingCorrect(-abs(dxc)*0.2,3)
-            else:
-                headingCorrect(15,0.5)
-    else:
-        if (signFound):
-            initDrivePosition = driveMotor.position
-            while(driveMotor.position - initDrivePosition <200):
-                headingCorrect(getHeading(gyro.angle),0.5)
-            signFound = False
-        else:
-             wallFollower()
-        print("target not found")
-        heading_kp = 0.5
-    
 
 # start init
 init()
@@ -208,8 +172,6 @@ sound.beep()
 while not button.enter:
     # Clear display
     lcd.clear()
-    bus = SMBus(3)
-    print("smbus ok(v2)")
     # Request block
     bus.write_i2c_block_data(address, 0, data)
     # Read block
@@ -223,7 +185,46 @@ while not button.enter:
     # Scale to resolution of EV3 display:
     # Resolution Pixy2 while color tracking; (316x208)
     # Resolution EV3 display: (178x128)
-    signPathing(int(w*h))
+    # sign pathing
+    area = int(h*w)
+    if (area > 1000 ):
+        print("target found")
+        signFound = True
+        dxc = 158 - x
+        print("x,y",x,y)
+        print("dxc",dxc)
+        initDrivePosition = driveMotor.position
+        initHeading = gyro.angle
+        if(sig == 1):
+            # red traffic sign
+            if (dxc > -100):
+                if (abs(dxc)< 30):
+                    dxc = 30 * dxc / abs(dxc)
+                headingCorrect(abs(dxc)*0.2,3)
+            else:
+                headingCorrect(15,0.5)
+        elif (sig == 2):
+            # green traffic sign
+            print(dxc)
+            if (dxc < 100):
+                if (abs(dxc)< 30):
+                    dxc = 30 * dxc / abs(dxc)
+                headingCorrect(-abs(dxc)*0.2,3)
+            else:
+                headingCorrect(-15,0.5)
+    else:
+        if (signFound):
+            currentDrivePosition = driveMotor.position
+            while((currentDrivePosition- initDrivePosition) <200):
+                currentDrivePosition = driveMotor.position
+                headingCorrect(getHeading(initHeading),0.5)
+            signFound = False
+        else:
+             wallFollower()
+        print("target not found")
+        heading_kp = 0.5
+        
+        
     if(button.up):
         driveMotor.on(SpeedPercent(25))
     elif(button.down):
