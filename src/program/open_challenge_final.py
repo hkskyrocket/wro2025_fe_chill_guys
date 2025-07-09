@@ -6,6 +6,7 @@ import sys
 import time
 
 from math import cos,pi
+from ev3dev2.led import Leds
 from ev3dev2.sound import Sound
 from ev3dev2.motor import MediumMotor, OUTPUT_C,OUTPUT_D,SpeedPercent;
 from ev3dev2.sensor import INPUT_4,INPUT_3,INPUT_2;
@@ -32,6 +33,7 @@ gyro = GyroSensor(INPUT_4)
 horDis = UltrasonicSensor(INPUT_3)
 colourSensor = ColorSensor(INPUT_2)
 sound = Sound()
+led = Leds()
 
 gyroInit = int(gyro.angle)
 
@@ -108,7 +110,7 @@ def headingLimit(targetHeadingCorrection):
     elif (abs(targetHeadingCorrection)< 10 and abs(targetHeadingCorrection)>3):
         return int(3 * targetHeadingCorrection / abs(targetHeadingCorrection))
     else:
-        return targetHeadingCorrection/2         
+        return targetHeadingCorrection/2       
         
 def distanceCorrection(targetDistance):
     targetDistance = float(targetDistance)
@@ -136,14 +138,14 @@ def getColourDetected(rgb):
     b = rgb[2]
     total = r + g + b
     debug_print("total",total)
-    if(total < 500):
-        if (r>80):
+    if(total < 400):
+        if (r>135):
             print(colour[1])
             return int(1)
         else:
             print(colour[2])
             return int(2)
-    elif((r-b)>0):
+    elif((r-b)>10):
         print(colour[1])
         return int(1)
     else:
@@ -165,12 +167,16 @@ def getColourDetected(rgb):
         
 
 # start init program
+led.set_color("LEFT","RED")
+led.set_color("RIGHT","RED")
 init()
 sound.set_volume(100)
     
 print('press to start')
 sound.beep()
 colourSensor.MODE_RGB_RAW
+led.set_color("LEFT","ORANGE")
+led.set_color("RIGHT","ORANGE")
 while button.right != True:
     debug_print("colour",colourSensor.rgb,colour[getColourDetected(colourSensor.rgb)])
 # wait for start
@@ -197,31 +203,22 @@ if (currentDetectedColour == 1):
     while(sessionMoved<11):
         sound.beep()
         driveMotor.on(SpeedPercent(30))
-        while (getWallDistance(horDis.distance_centimeters,getHeading(gyro.angle))<28):
+        while (getWallDistance(horDis.distance_centimeters,getHeading(gyro.angle))<40):
             wallFollower()
             debug_print("wall detected")
-        # sound.beep()
-        # initDrive = driveMotor.position
-        # currentDrive = driveMotor .position
-        # steeringMotor.on_to_position(SpeedPercent(100),int(10 + steeringInit ))
-        # debug_print("forward 100 degree")
-        # while ((currentDrive - initDrive)<100):
-        #     currentDrive = driveMotor .position
-        #     driveMotor.on(SpeedPercent(50))
-        # print("session moved",sessionMoved)
+            
         sound.beep()
         debug_print("turning")
         driveMotor.on(SpeedPercent(0))
-        gyroInit = gyroInit + 90
-        # gyroInit = gyroInit + 80
+        gyroInit = gyroInit + 95
         time.sleep(0.2)
         sound.beep()
         currentDetectedColour = 0
         initDrive = driveMotor.position
         currentDrive = driveMotor.position
         steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit ))
-        while ((currentDetectedColour == 0) or 
-               (currentDrive - initDrive)<4000):
+        while ((not currentDetectedColour == 1) or 
+               (currentDrive - initDrive)<3000):
             wallFollower()
             currentDrive = driveMotor.position
             if(currentDrive - initDrive)<800:
@@ -230,33 +227,20 @@ if (currentDetectedColour == 1):
                 driveMotor.on(SpeedPercent(100))
             else:
                 driveMotor.on(SpeedPercent(25))
-            if((currentDrive - initDrive)>5000):
-                break
             print(currentDrive - initDrive)
             currentDetectedColour = getColourDetected(colourSensor.rgb)
         sessionMoved = sessionMoved +1
         
     sound.beep()
     driveMotor.on(SpeedPercent(30))
-    while (getWallDistance(horDis.distance_centimeters,getHeading(gyro.angle))<28):
+    while (getWallDistance(horDis.distance_centimeters,getHeading(gyro.angle))<40):
         wallFollower()
-    # sound.beep()
-    # initDrive = driveMotor.position
-    # currentDrive = driveMotor .position
-    # steeringMotor.on_to_position(SpeedPercent(100),int(10 + steeringInit ))
-    # debug_print("forward 100 degree")
-    # while ((currentDrive - initDrive)<100):
-    #     currentDrive = driveMotor .position
-    #     driveMotor.on(SpeedPercent(50))
-    # print("session moved",sessionMoved)
-    sound.beep()
-    while(getHeading(gyro.angle) < 20):
-        driveMotor.on(SpeedPercent(100))
-        steeringMotor.on_to_position(SpeedPercent(100),int(-40 + steeringInit ))
+   
     sound.beep()
     driveMotor.on(SpeedPercent(0))
-    time.sleep(0.3)
-    gyroInit = gyro.angle
+    gyroInit = gyroInit + 90
+    time.sleep(0.2)
+    sound.beep()
     # gyroInit = gyroInit + 80
     time.sleep(0.2)
     sound.beep()
@@ -265,49 +249,38 @@ elif(currentDetectedColour == 2):
     while(sessionMoved<11):
         print("session moved",sessionMoved)
         sound.beep()
-        driveMotor.on(SpeedPercent(50))
-        while(getHeading(gyro.angle)>-60):
-            print(getHeading(gyro.angle))
-            steeringMotor.on_to_position(SpeedPercent(100),int(25 + steeringInit ))
-        sound.beep()
         driveMotor.on(SpeedPercent(0))
-        time.sleep(0.3)
-        gyroInit = gyro.angle
+        gyroInit = gyroInit- 90
         time.sleep(0.2)
         sound.beep()
         currentDetectedColour = 0
         initDrive = driveMotor.position
         currentDrive = driveMotor.position
-        steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit ))
-        while (( currentDetectedColour == 0) or 
-               (currentDrive - initDrive)<3500):
+        while ((not currentDetectedColour == 2) or 
+               (currentDrive - initDrive)<3000):
             currentDrive = driveMotor.position
-            if(currentDrive - initDrive)<3500:
+            if(currentDrive - initDrive)<800:
+                driveMotor.on(SpeedPercent(40))
+            elif(currentDrive - initDrive)<4000:
                 driveMotor.on(SpeedPercent(100))
             else:
                 driveMotor.on(SpeedPercent(25))
-            # if((currentDrive - initDrive)>5000):
-            #     break
             print('drive position',currentDrive - initDrive)
             wallFollower()
             currentDetectedColour = getColourDetected(colourSensor.rgb)
         sessionMoved = sessionMoved +1
     sound.beep()
-    driveMotor.on(SpeedPercent(50))
-    while(getHeading(gyro.angle)>-60):
-        print(getHeading(gyro.angle))
-        steeringMotor.on_to_position(SpeedPercent(100),int(25 + steeringInit ))
-    sound.beep()
     driveMotor.on(SpeedPercent(0))
-    time.sleep(0.3)
-    gyroInit = gyro.angle
+    gyroInit = gyroInit- 90
     time.sleep(0.2)
-    sound.beep()
-steeringMotor.on_to_position(SpeedPercent(100),int(steeringInit ))
 initDrive = driveMotor.position
 currentDrive = driveMotor.position
 driveMotor.on(SpeedPercent(100))
-while ((currentDrive - initDrive)<finalDrive):
+while ((currentDrive - initDrive - 800)<finalDrive):
+    if(currentDrive - initDrive)<800:
+        driveMotor.on(SpeedPercent(40))
+    else:
+        driveMotor.on(SpeedPercent(100))
     currentDrive = driveMotor.position
     wallFollower()
 driveMotor.on(SpeedPercent(0))
